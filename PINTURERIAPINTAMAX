@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Precios con Tarjetas</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    label, select, input { margin: 5px 0; display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Calculadora de Precios con Tarjetas</h1>
+
+  <input type="text" id="buscador" placeholder="Buscar artículo...">
+
+  <select id="articulo"></select>
+
+  <label for="tarjeta">Seleccione tarjeta:</label>
+  <select id="tarjeta">
+    <option value="naranja">Tarjeta Naranja</option>
+    <option value="bancaria">Tarjetas Bancarias</option>
+  </select>
+
+  <label for="cuotas">Seleccione cantidad de cuotas:</label>
+  <select id="cuotas"></select>
+
+  <p id="resultado"></p>
+  <p id="precioLista"></p>
+
+  <script>
+    const articulos = [...].sort((a, b) => a.nombre.localeCompare(b.nombre)); // Se mantiene igual, omitido por brevedad
+
+    const intereses = {
+      naranja: {
+        "1 cuota": 10,
+        "3 cuotas": 24,
+        "6 cuotas": 40,
+        "9 cuotas": 55,
+        "12 cuotas": 73,
+        "plan z": 24
+      },
+      bancaria: {
+        "1 cuota": 10,
+        "3 cuotas": 27,
+        "6 cuotas": 25
+      }
+    };
+
+    const articuloSelect = document.getElementById('articulo');
+    const tarjetaSelect = document.getElementById('tarjeta');
+    const cuotasSelect = document.getElementById('cuotas');
+    const resultado = document.getElementById('resultado');
+    const precioListaElem = document.getElementById('precioLista');
+    const buscador = document.getElementById('buscador');
+
+    function formatCurrency(num) {
+      return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function cargarArticulos(filtrados = articulos) {
+      articuloSelect.innerHTML = '';
+      filtrados.forEach(art => {
+        const option = document.createElement('option');
+        option.value = art.precio;
+        option.textContent = art.nombre;
+        articuloSelect.appendChild(option);
+      });
+      calcular();
+    }
+
+    function cargarCuotas() {
+      cuotasSelect.innerHTML = '';
+      const tipo = tarjetaSelect.value;
+      for (let cuota in intereses[tipo]) {
+        const option = document.createElement('option');
+        option.value = intereses[tipo][cuota];
+        option.textContent = cuota;
+        cuotasSelect.appendChild(option);
+      }
+      calcular();
+    }
+
+    function calcular() {
+      const precioBase = parseFloat(articuloSelect.value);
+      const precioLista = precioBase * 1.25;
+      const interes = parseFloat(cuotasSelect.value);
+      const cuotasTexto = cuotasSelect.options[cuotasSelect.selectedIndex].text;
+      const cantidadCuotas = cuotasTexto.includes('plan z') ? 3 : parseInt(cuotasTexto);
+      const precioFinal = precioLista * (1 + interes / 100);
+      const valorCuota = precioFinal / cantidadCuotas;
+      resultado.textContent = `Precio final: $${formatCurrency(precioFinal)} | Cuota: $${formatCurrency(valorCuota)}`;
+      precioListaElem.textContent = `Precio de lista (efectivo o débito): $${formatCurrency(precioLista)}`;
+    }
+
+    buscador.addEventListener('input', () => {
+      const texto = buscador.value.toLowerCase();
+      const filtrados = articulos.filter(art => art.nombre.toLowerCase().includes(texto));
+      cargarArticulos(filtrados);
+    });
+
+    articuloSelect.addEventListener('change', calcular);
+    tarjetaSelect.addEventListener('change', cargarCuotas);
+    cuotasSelect.addEventListener('change', calcular);
+
+    cargarArticulos();
+    cargarCuotas();
+  </script>
+</body>
+</html>
